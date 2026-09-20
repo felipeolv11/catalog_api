@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace catalog_api.Context;
 
-public class AppDbContext : IdentityDbContext
+public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -12,4 +12,9 @@ public class AppDbContext : IdentityDbContext
 
     public DbSet<Categoria>? Categorias { get; set; }
     public DbSet<Produto>? Produtos { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+    }
 }
