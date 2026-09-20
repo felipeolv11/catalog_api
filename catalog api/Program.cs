@@ -2,6 +2,7 @@ using catalog_api.Context;
 using catalog_api.DTOs.Mappings;
 using catalog_api.Repositories;
 using catalog_api.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -19,6 +20,10 @@ namespace catalog_api
                     options.JsonSerializerOptions
                     .ReferenceHandler = ReferenceHandler.IgnoreCycles)
                         .AddNewtonsoftJson();
+
+            builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
 
             string mySqlConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
