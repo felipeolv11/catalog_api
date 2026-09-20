@@ -5,6 +5,7 @@ using catalog_api.DTOs.Mappings;
 using catalog_api.Models;
 using catalog_api.Pagination;
 using catalog_api.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpGet("Paginação")]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<IEnumerable<CategoriaDTO>>> Get([FromQuery] CategoriasParameters categoriasParameters)
     {
         var categorias = await _uow.CategoriaRepository.GetCategoriasAsync(categoriasParameters);
@@ -48,6 +50,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpGet("Filtro/Nome/Paginação")]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<IEnumerable<CategoriaDTO>>> GetCategoriasFiltradas([FromQuery] CategoriasFiltroNome categoriasFilterParameters)
     {
         var categorias = await _uow.CategoriaRepository.GetCategoriasFiltroNomeAsync(categoriasFilterParameters);
@@ -70,6 +73,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<IEnumerable<CategoriaDTO>>> Get()
     {
         var categorias = await _uow.CategoriaRepository.GetAllAsync();
@@ -83,6 +87,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpGet("{id:int}", Name = "ObterCategoria")]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<CategoriaDTO>> Get(int id)
     {
         var categoria = await _uow.CategoriaRepository.GetAsync(c => c.CategoriaId == id);
@@ -96,6 +101,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<CategoriaDTO>> Post(CategoriaDTO categoriaDto)
     {
         if (categoriaDto is null)
@@ -113,6 +119,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<CategoriaDTO>> Put(int id, CategoriaDTO categoriaDto)
     {
         if (id != categoriaDto.CategoriaId)
@@ -129,6 +136,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<ActionResult<CategoriaDTO>> Delete(int id)
     {
         var categoria = await _uow.CategoriaRepository.GetAsync(c => c.CategoriaId == id);

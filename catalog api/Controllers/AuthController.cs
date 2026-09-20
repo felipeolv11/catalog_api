@@ -44,6 +44,7 @@ public class AuthController : ControllerBase
             {
                 new Claim(ClaimTypes.Name, user.UserName!),
                 new Claim(ClaimTypes.Email, user.Email!),
+                new Claim("id", user.UserName!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
@@ -145,8 +146,9 @@ public class AuthController : ControllerBase
         });
     }
 
-    
+
     [HttpPost]
+    [Authorize(Policy = "ExclusiveOnly")]
     [Route("Revoke/{username}")]
     public async Task<IActionResult> Revoke(string username)
     {
@@ -160,5 +162,60 @@ public class AuthController : ControllerBase
         await _userManager.UpdateAsync(user);
 
         return NoContent();
+    }
+
+    [HttpPost]
+    [Authorize(Policy = "SuperAdminOnly")]
+    [Route("CreateRole")]
+    public async Task<IActionResult> CreateRole(string roleName)
+    {
+        var roleExist = await _roleManager.RoleExistsAsync(roleName);
+
+        if (!roleExist)
+        {
+            var roleResult = await _roleManager.CreateAsync(new IdentityRole(roleName));
+
+            if (roleResult.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status200OK,
+                    new ResponseDTO { Status = "Sucesso", Message = $"Role {roleName} adicionada com sucesso" });
+            }
+
+            else
+            {
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    new ResponseDTO { Status = "Erro", Message = $"Erro ao adicionar a nova role {roleName}" });
+            }
+        }
+
+        return StatusCode(StatusCodes.Status400BadRequest,
+            new ResponseDTO { Status = "Erro", Message = "A role já existe." });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = "SuperAdminOnly")]
+    [Route("AddUserToRole")]
+    public async Task<IActionResult> AddUserToRole(string email, string roleName)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user != null)
+        {
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+
+            if (result.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status200OK,
+                    new ResponseDTO { Status = "Sucesso", Message = $"Usuário {user.Email} adicionado a role {roleName}" });
+            }
+
+            else
+            {
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    new ResponseDTO { Status = "Erro", Message = $"Erro: Não é possível adicionar o usuário {user.Email} à role {roleName}" });
+            }
+        }
+
+        return BadRequest();
     }
 }

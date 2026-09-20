@@ -4,6 +4,7 @@ using catalog_api.DTOs;
 using catalog_api.Models;
 using catalog_api.Pagination;
 using catalog_api.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpGet("Categoria/{id}")]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<IEnumerable<ProdutoDTO>>> GetProdutosPorCategoria(int id)
     {
         var produtos = await _uow.ProdutoRepository.GetProdutosPorCategoriaAsync(id);
@@ -39,6 +41,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpGet("Paginação")]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<IEnumerable<ProdutoDTO>>> Get([FromQuery] ProdutosParameters produtosParameters)
     {
         var produtos = await _uow.ProdutoRepository.GetProdutosAsync(produtosParameters);
@@ -61,6 +64,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpGet("Filtro/Preço/Paginação")]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<IEnumerable<ProdutoDTO>>> GetProdutosFilterPreco([FromQuery] ProdutosFiltroPreco produtosFilterParameters)
     {
         var produtos = await _uow.ProdutoRepository.GetProdutosFiltroPrecoAsync(produtosFilterParameters);
@@ -83,6 +87,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<IEnumerable<ProdutoDTO>>> Get()
     {
         var produtos = await _uow.ProdutoRepository.GetAllAsync();
@@ -96,6 +101,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpGet("{id:int}", Name = "ObterProduto")]
+    [Authorize(Policy = "UserOnly")]
     public async Task<ActionResult<ProdutoDTO>> Get(int id)
     {
         var produto = await _uow.ProdutoRepository.GetAsync(p => p.ProdutoId == id);
@@ -109,6 +115,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<ProdutoDTO>> Post(ProdutoDTO produtoDto)
     {
         if (produtoDto is null)
@@ -126,6 +133,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpPatch("{id}")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<ProdutoDTOUpdateResponse>> Patch(int id, JsonPatchDocument<ProdutoDTOUpdateRequest> patchProdutoDto)
     {
         if (patchProdutoDto is null || id <= 0)
@@ -152,6 +160,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<ProdutoDTO>> Put(int id, ProdutoDTO produtoDto)
     {
         if (id != produtoDto.ProdutoId)
@@ -168,6 +177,7 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<ProdutoDTO>> Delete(int id)
     {
         var produto = await _uow.ProdutoRepository.GetAsync(p => p.ProdutoId == id);
