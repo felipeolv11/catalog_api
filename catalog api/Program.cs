@@ -3,7 +3,9 @@ using catalog_api.DTOs.Mappings;
 using catalog_api.Models;
 using catalog_api.Repositories;
 using catalog_api.Repositories.Interfaces;
+using catalog_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -24,6 +26,42 @@ namespace catalog_api
                     options.JsonSerializerOptions
                     .ReferenceHandler = ReferenceHandler.IgnoreCycles)
                         .AddNewtonsoftJson();
+
+            builder.Services.AddOpenApi(options =>
+            {
+                options.AddDocumentTransformer((document, context, cancellationToken) =>
+                {
+                    document.Components ??= new Microsoft.OpenApi.Models.OpenApiComponents();
+
+                    document.Components.SecuritySchemes.Add("Bearer",
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                            Scheme = "bearer",
+                            BearerFormat = "JWT",
+                            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                            Description = "Digite o token JWT"
+                        });
+
+                    document.SecurityRequirements.Add(
+                        new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                        {
+                            {
+                                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                                {
+                                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                                    {
+                                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                        Id = "Bearer"
+                                    }
+                                },
+                                Array.Empty<string>()
+                            }
+                        });
+
+                    return Task.CompletedTask;
+                });
+            });
 
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
@@ -53,6 +91,7 @@ namespace catalog_api
                     ValidateIssuerSigningKey = true,
                     ClockSkew = TimeSpan.Zero,
                     ValidAudience = builder.Configuration["JWT:ValidAudience"],
+                    ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
             });
@@ -61,11 +100,12 @@ namespace catalog_api
             builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<ITokenService, TokenService>();
 
             builder.Services.AddAutoMapper(typeof(CatalogoDTOMappingProfile));
 
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+            // builder.Services.AddOpenApi();
 
             var app = builder.Build();
 
@@ -78,6 +118,8 @@ namespace catalog_api
             }
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
